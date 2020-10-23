@@ -1,19 +1,25 @@
 // Standard Library includes
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 
 // include out project headers (functions)
 #include "TransformChar.hpp"
 #include "ProcessCommandLine.hpp"
+#include "RunCaesarCipher.hpp"
 
 bool processComandLine(const std::vector<std::string>& args,
                        bool& helpRequested,
                        bool& versionRequested,
                        std::string& inputFileName,
-                       std::string& outputFileName);
+                       std::string& outputFileName,
+                       bool& encrypt,
+                       size_t& key);
 
 std::string transformChar(const char in_char);
+
+std::string runCaesarCipher(const std::string& in_string, const size_t key, const bool encrypt);
 
 // Main function of the mpags-cipher program
 int main(int argc, char* argv[])
@@ -26,9 +32,11 @@ int main(int argc, char* argv[])
   bool versionRequested {false};
   std::string inputFile {""};
   std::string outputFile {""};
+  bool encrypt{true};
+  size_t key{5};
 
   // Parse command lines, if something went wrong we want to exit the code (returns false)
-  bool parseSucess {processComandLine(cmdLineArgs, helpRequested, versionRequested, inputFile, outputFile)};
+  bool parseSucess {processComandLine(cmdLineArgs, helpRequested, versionRequested, inputFile, outputFile, encrypt, key)};
   if(!parseSucess)
   {
     std::cout << "Something went wrong... exiting" << std::endl;
@@ -47,7 +55,9 @@ int main(int argc, char* argv[])
       << "  -i FILE          Read text to be processed from FILE\n"
       << "                   Stdin will be used if not supplied\n\n"
       << "  -o FILE          Write processed text to FILE\n"
-      << "                   Stdout will be used if not supplied\n\n";
+      << "                   Stdout will be used if not supplied\n\n"
+      << "  -a string        action to do, either 'encrypt' or 'decrypt'\n\n"
+      << "  -k size_t        cipher key used to encrypt/decrypt file, default is 5\n\n";
     // Help requires no further action, so return from main
     // with 0 used to indicate success
     //return true;
@@ -66,31 +76,60 @@ int main(int argc, char* argv[])
   // Initialise variables for processing input text
   char inputChar {'x'};
   std::string inputText {""};
+  std::string outputText {""};
 
   // Read in user input from stdin/file
   // Warn that input file option not yet implemented
   if (!inputFile.empty()) {
-    std::cout << "[warning] input from file ('"
-              << inputFile
-              << "') not implemented yet, using stdin\n";
+    std::ifstream in_file {inputFile};
+    if(in_file.good())
+    {
+      /*read the files contents character by character and then converts the text.
+      Will not read white spaces */
+      while(in_file >> inputChar)
+      {
+        inputText += transformChar(inputChar);
+      }
+      in_file.close();
+    }
+    else
+    {
+      std::cout << "[error] couldn't open file... exiting" << std::endl;
+      return 1;
+    }
+  }
+  else
+  {
+    // Loop over each character from user input
+    // (until Return then CTRL-D (EOF) pressed)
+    while(std::cin >> inputChar)
+    {
+      inputText += transformChar(inputChar);
+    }
   }
 
-  // Loop over each character from user input
-  // (until Return then CTRL-D (EOF) pressed)
-  while(std::cin >> inputChar)
-  {
-    inputText += transformChar(inputChar);
-  }
+  outputText = runCaesarCipher(inputText, key, encrypt);
 
   // Output the transliterated text
   // Warn that output file option not yet implemented
   if (!outputFile.empty()) {
-    std::cout << "[warning] output to file ('"
-              << outputFile
-              << "') not implemented yet, using stdout\n";
+    std::ofstream out_file {outputFile};
+    if(out_file.good())
+    {
+      out_file << outputText;
+    }
+    else
+    {
+      std::cout << "[error] couldn't open file... exiting" << std::endl;
+      return 1;
+    }
+    
+  }
+  else {
+    std::cout << outputText << std::endl;
   }
 
-  std::cout << inputText << std::endl;
+  
 
   // No requirement to return from main, but we do so for clarity
   // and for consistency with other functions

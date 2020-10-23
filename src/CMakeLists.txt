@@ -7,6 +7,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON) # turns on verbose mode so we can see what is hap
 add_executable(mpags-cipher mpags-cipher.cpp 
     MPAGSCipher/TransformChar.cpp
     MPAGSCipher/ProcessCommandLine.cpp
+    MPAGSCipher/RunCaesarCipher.cpp
     )
 
 # we can directly set the version of c++ using
