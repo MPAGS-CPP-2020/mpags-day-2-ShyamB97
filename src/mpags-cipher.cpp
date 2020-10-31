@@ -75,20 +75,28 @@ int main(int argc, char* argv[])
 
   // Initialise variables for processing input text
   char inputChar {'x'};
+  std::string inputString {""};
   std::string inputText {""};
   std::string outputText {""};
+  std::vector<std::string> outputLines {};
 
   // Read in user input from stdin/file
-  // Warn that input file option not yet implemented
   if (!inputFile.empty()) {
     std::ifstream in_file {inputFile};
     if(in_file.good())
     {
-      /*read the files contents character by character and then converts the text.
-      Will not read white spaces */
-      while(in_file >> inputChar)
+      /*read the files contents character by character and then converts the text,
+      line by line. Will not read white spaces */
+      while(getline(in_file, inputString))
       {
-        inputText += transformChar(inputChar);
+        for(size_t i = 0; i < inputString.length(); i++)
+        {
+          inputChar = inputString[i];
+          inputText += transformChar(inputChar);
+        }
+        outputText = runCaesarCipher(inputText, key, encrypt);
+        outputLines.push_back(outputText);
+        inputText = ""; // need to clear the inputText
       }
       in_file.close();
     }
@@ -106,17 +114,18 @@ int main(int argc, char* argv[])
     {
       inputText += transformChar(inputChar);
     }
+    outputText = runCaesarCipher(inputText, key, encrypt);
   }
 
-  outputText = runCaesarCipher(inputText, key, encrypt);
-
   // Output the transliterated text
-  // Warn that output file option not yet implemented
   if (!outputFile.empty()) {
     std::ofstream out_file {outputFile};
     if(out_file.good())
     {
-      out_file << outputText;
+      for(size_t j = 0; j < outputLines.size(); j++)
+      {
+        out_file << outputLines[j] << std::endl;
+      }
     }
     else
     {
